@@ -37,6 +37,7 @@ export default function Navbar({ userEmail }: NavbarProps) {
         <>
           <span>{userEmail}</span>
           <Link href="/dashboard">Dashboard</Link>
+          <Link href="/tokens">Token Inspector</Link>
           <form onSubmit={handleSignOut}>
             <button type="submit" disabled={isLoggingOut}>
               {isLoggingOut ? "..." : "Sign Out"}

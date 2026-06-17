@@ -95,3 +95,122 @@ pre {
   color: #006600;
   font-weight: 600;
 }
+
+/* Dashboard */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fafafa;
+}
+
+.card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.session-card dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.session-card dt {
+  font-weight: 600;
+  color: #555;
+}
+
+.session-card dd {
+  margin: 0;
+}
+
+.mono {
+  font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+  font-size: 0.875rem;
+}
+
+.protected-asset-card p {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.protected-asset-card code {
+  background: #eee;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+
+.asset-container {
+  position: relative;
+  display: inline-block;
+}
+
+.protected-image {
+  display: block;
+  max-width: 100%;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.auth-badge {
+  background: #006600;
+  color: #fff;
+}
+
+.demo-card p {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.demo-card code {
+  background: #eee;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+
+.test-result {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.test-result pre {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  background: #f5f5f5;
+  padding: 0.5rem;
+}
+
+.test-result.error {
+  border-color: #cc0000;
+  background: #fff5f5;
+}
+
+.test-result.error pre {
+  background: #fee;
+}
