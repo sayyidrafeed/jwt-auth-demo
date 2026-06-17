@@ -1,58 +1,81 @@
 # 🔐 Next.js 16 JWT Authentication Demo
 
-A production-ready, highly secure, full-stack Next.js application demonstrating state-of-the-art JSON Web Token (JWT) authentication, Refresh Token Rotation (RTR), and Token Revocation (Blacklisting). Built with modern tech standards: **Next.js 16 (App Router)**, **Tailwind CSS v4**, **Drizzle ORM**, **PostgreSQL**, and **Bun**.
+A production-ready, full-stack Next.js application demonstrating JSON Web Token (JWT) authentication, Refresh Token Rotation (RTR), Token Revocation (blacklisting), and **protected asset serving**. Built with **Next.js 16 (App Router)**, **Drizzle ORM**, **PostgreSQL**, and **Bun**.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Features
 
-*   **Stateless JWT Authentication**: Access tokens are stored in secure, `httpOnly`, `sameSite: "lax"`, and `secure` (in production) cookies, minimizing CSRF and XSS vulnerability risks.
-*   **Refresh Token Rotation (RTR)**: Long-lived refresh tokens are stored as secure cookies and hashed in the database. When a user requests a new access token, the current refresh token is rotated (invalidated, and a new one is issued) to prevent replay attacks.
-*   **Graceful Silent Refresh**: Next.js middleware detects expired or expiring access tokens and performs an automatic, server-to-server silent token refresh using the refresh token, providing a seamless UX without page flashes or unauthenticated states.
-*   **Optional Token Revocation (Blacklist)**: An optimized revocation mechanism tracks revoked token identifiers (`jti`) in a database blacklist. Can be enabled/disabled via the `ENABLE_TOKEN_BLACKLIST` environment flag.
-*   **Fully Type-Safe**: Implements strict TypeScript checks throughout the application, including DB schemas, API handlers, and utilities.
-*   **Supercharged Tooling**: Integrated with **Oxlint** for ultra-fast, modern linting.
+- **Stateless JWT Authentication** — Access tokens in `httpOnly`, `sameSite: "lax"`, `secure` (prod) cookies.
+- **Refresh Token Rotation (RTR)** — Long-lived refresh tokens, hashed in the DB, rotated on each refresh.
+- **Token Revocation (Blacklist)** — Optional blacklist via `ENABLE_TOKEN_BLACKLIST` env flag.
+- **Protected Asset Serving** — `GET /api/assets/[filename]` serves images only to authenticated users. Attempts without a valid `access_token` cookie return `401 Unauthorized`.
+- **Interactive Auth Demo** — Dashboard shows session JWT claims, renders a protected asset, and lets you test unauthenticated access to prove the auth gate works.
+- **Token Inspector** — `/tokens` page decodes and displays raw JWT header, payload, signature; supports manual refresh and revoke actions.
+- **Fully Type-Safe** — Strict TypeScript throughout, including DB schemas, API handlers, and utilities.
+- **Oxlint** — Ultra-fast linting.
 
 ---
 
 ## 🛠️ Tech Stack
 
-*   **Runtime**: [Bun](https://bun.sh/)
-*   **Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
-*   **Database ORM**: [Drizzle ORM](https://orm.drizzle.team/)
-*   **Database**: PostgreSQL (Support for [Neon Database](https://neon.tech/) serverless driver & local PostgreSQL via Docker Compose)
-*   **JWT & Cryptography**: [jose](https://github.com/panva/jose) (Lightweight, web-standards compliant) & [bcryptjs](https://github.com/dcodeIO/bcrypt.js/)
-*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-*   **Linter**: [Oxlint](https://github.com/oxc-project/oxc)
+| Layer | Technology |
+|---|---|
+| Runtime | [Bun](https://bun.sh/) |
+| Framework | [Next.js 16 (App Router)](https://nextjs.org/) |
+| Database ORM | [Drizzle ORM](https://orm.drizzle.team/) |
+| Database | PostgreSQL (local via Docker Compose or Neon serverless) |
+| JWT | [jose](https://github.com/panva/jose) (HS256) |
+| Password Hashing | [bcryptjs](https://github.com/dcodeIO/bcrypt.js/) (12 rounds) |
+| Styling | Plain CSS |
+| Linter | [Oxlint](https://github.com/oxc-project/oxc) |
 
 ---
 
 ## 📁 Project Structure
 
-```text
+```
 jwt-auth-demo/
-├── docker-compose.yml       # Local PostgreSQL database setup
-├── drizzle.config.ts        # Drizzle migration and schema config
-├── oxlint.json              # Oxlint configuration
-├── package.json             # Scripts & dependency definitions
-├── tsconfig.json            # TypeScript configuration
+├── docker-compose.yml              # Local PostgreSQL (port 5433)
+├── drizzle.config.ts               # Drizzle Kit config
+├── oxlint.json                     # Oxlint config
+├── package.json                    # Scripts & dependencies
+├── tsconfig.json                   # Strict TypeScript config
 ├── src/
+│   ├── assets/
+│   │   └── cat-hihi.webp           # Demo protected image
 │   ├── app/
-│   │   ├── (auth)/          # Authentication Route Group (sign-in, sign-up)
-│   │   ├── (protected)/     # Protected Routes Group (dashboard)
-│   │   ├── api/auth/        # Auth REST endpoints (sign-in, sign-up, sign-out, refresh, verify-blacklist)
-│   │   ├── globals.css      # Core styles & Tailwind directives
-│   │   ├── layout.tsx       # Root layout
-│   │   └── page.tsx         # Landing page
-│   ├── components/          # Reusable UI components (Navbar, etc.)
+│   │   ├── globals.css             # Global styles
+│   │   ├── layout.tsx              # Root layout
+│   │   ├── page.tsx                # Public landing page
+│   │   ├── (auth)/
+│   │   │   ├── sign-in/page.tsx    # Sign In form
+│   │   │   └── sign-up/page.tsx    # Sign Up form
+│   │   ├── (protected)/
+│   │   │   ├── dashboard/
+│   │   │   │   ├── page.tsx        # Dashboard (session info + protected asset)
+│   │   │   │   └── auth-demo-panel.tsx  # Interactive 401 demo
+│   │   │   └── tokens/page.tsx     # JWT token inspector
+│   │   └── api/
+│   │       ├── assets/[filename]/route.ts  # Protected asset serving
+│   │       └── auth/
+│   │           ├── sign-up/route.ts
+│   │           ├── sign-in/route.ts
+│   │           ├── sign-out/route.ts
+│   │           ├── refresh/route.ts
+│   │           ├── token-info/route.ts
+│   │           └── verify-blacklist/route.ts
+│   ├── components/
+│   │   ├── navbar.tsx              # Navigation (auth-aware)
+│   │   └── verify-button.tsx       # Token validity checker
 │   ├── db/
-│   │   ├── index.ts         # Database connection setup
-│   │   └── schema.ts        # Database schema (users, refresh_tokens, revoked_tokens)
+│   │   ├── index.ts                # DB connection
+│   │   └── schema.ts               # users, refresh_tokens, revoked_tokens
 │   ├── lib/
-│   │   ├── jwt.ts           # Token generation, verification, and hashing utils
-│   │   ├── password.ts      # Password hashing & validation utilities
-│   │   └── session.ts       # Utility to get current authenticated user session
-│   └── middleware.ts        # Route protection, redirect rules, and silent token refresh
+│   │   ├── jwt.ts                  # Sign, verify, hash tokens
+│   │   ├── password.ts             # bcryptjs hash/compare
+│   │   └── session.ts              # Server-side session from cookie
+│   └── proxy.ts                    # Middleware logic (not yet wired as middleware.ts)
 ```
 
 ---
@@ -61,141 +84,106 @@ jwt-auth-demo/
 
 ### Prerequisites
 
-Ensure you have the following installed:
-*   [Bun](https://bun.sh/)
-*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for local database execution)
+- [Bun](https://bun.sh/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for local DB)
 
----
-
-### 1. Installation
-
-Clone the repository and install the project dependencies:
+### 1. Install
 
 ```bash
 bun install
 ```
 
----
-
-### 2. Configure Environment Variables
-
-Copy the example environment configuration file to create your local environment file:
+### 2. Environment
 
 ```bash
 cp .env.example .env.local
 ```
 
-Open `.env.local` and configure the settings. Below are the key environment variables:
+Key variables:
 
-| Variable | Description | Example / Recommended Value |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | Connection string to your PostgreSQL instance. | `postgresql://postgres:password@localhost:5432/jwtauth` |
-| `JWT_SECRET` | A secure string used to sign JWTs (minimum 32 bytes). | Run `openssl rand -base64 32` to generate |
-| `JWT_ACCESS_EXPIRY` | Lifetime of access tokens. | `15m` |
-| `JWT_REFRESH_EXPIRY` | Lifetime of refresh tokens. | `7d` |
-| `ENABLE_TOKEN_BLACKLIST` | Toggles query checks to the blacklist database on every request. | `false` (default) or `true` |
+| Variable | Description | Example |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:password@localhost:5432/jwtauth` |
+| `JWT_SECRET` | HMAC signing key (min 32 bytes) | `openssl rand -base64 32` |
+| `JWT_ACCESS_EXPIRY` | Access token lifetime | `15m` |
+| `JWT_REFRESH_EXPIRY` | Refresh token lifetime | `7d` |
+| `ENABLE_TOKEN_BLACKLIST` | Enable blacklist queries | `false` or `true` |
 
----
-
-### 3. Spin Up the Local Database
-
-Run the Docker Compose setup to pull and launch a local PostgreSQL container:
+### 3. Start Database
 
 ```bash
 bun run docker:up
 ```
 
----
-
-### 4. Database Migrations
-
-Generate and apply the database migrations to set up the schemas for users, refresh tokens, and revoked tokens:
+### 4. Migrate
 
 ```bash
-# Generate SQL migration files based on src/db/schema.ts
 bun run db:generate
-
-# Apply migrations to the PostgreSQL database
 bun run db:migrate
 ```
 
----
-
-### 5. Running the Application
-
-Start the development server:
+### 5. Run
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 🛡️ Security Architecture & Authentication Flow
+## 🛡️ Authentication Flow
 
-### 📦 Access & Refresh Tokens Strategy
-1.  **Access Token**: Short-lived (e.g., `15m`). Signed with `jose.SignJWT` using the HMAC SHA-256 algorithm (`HS256`). Contains user identifiers and a unique `jti` (JWT ID). Stored in a secure `access_token` cookie.
-2.  **Refresh Token**: Long-lived (e.g., `7d`). Signed securely and stored in a secure `refresh_token` cookie. An SHA-256 hash of this token is saved in the `refresh_tokens` database table associated with the user.
+### Token Strategy
 
----
+1. **Access Token** — Short-lived (default `15m`). Signed with HS256 via `jose`. Contains `{ userId, email, jti }`. Stored in `access_token` cookie.
+2. **Refresh Token** — Long-lived (default `7d`). SHA-256 hash stored in `refresh_tokens` table. Stored in `refresh_token` cookie. Rotated on each use.
 
-### 🔄 Silent Refresh Flow
-The Next.js Middleware acts as the primary gatekeeper for protected routes:
+### Sign Up / Sign In
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Client Browser
-    participant MW as Next.js Middleware
-    participant API as /api/auth/refresh
-    participant DB as PostgreSQL DB
+1. Server validates credentials, signs both tokens, persists refresh token hash, sets cookies.
+2. Client-side redirect to `/dashboard`.
 
-    User->>MW: Request Protected Route (/dashboard)
-    alt Access Token is Valid
-        MW-->>User: Allow Access (NextResponse.next)
-    else Access Token is Expired / Missing
-        MW->>MW: Check for refresh_token cookie
-        alt refresh_token is Missing
-            MW-->>User: Redirect to /sign-in
-        else refresh_token is Present
-            MW->>API: Call POST /api/auth/refresh (sending refresh_token)
-            API->>DB: Lookup & verify active refresh token hash
-            alt Token Valid & Active
-                API->>DB: Delete old token, save new rotated refresh token hash
-                API-->>MW: Return new access_token & refresh_token cookies
-                MW-->>User: Set-Cookie & Allow Access (NextResponse.next)
-            else Token Invalid / Replay Detected
-                API-->>MW: Return 401 Unauthorized
-                MW-->>User: Clear Cookies & Redirect to /sign-in
-            end
-        end
-    end
-```
+### Silent Refresh (via proxy.ts)
+
+The `proxy.ts` module contains logic to detect expired access tokens and automatically refresh them server-to-server using the refresh token cookie. To activate it, rename `src/proxy.ts` to `src/middleware.ts`. This is currently opt-in to keep the demo simple.
+
+### Token Revocation
+
+- On sign-out, refresh token is deleted from DB.
+- If `ENABLE_TOKEN_BLACKLIST=true`, the access token's `jti` is inserted into `revoked_tokens`.
+- Subsequent requests check the blacklist.
 
 ---
 
-### 🚫 Token Revocation & Blacklisting
-When users sign out, their tokens can optionally be revoked to ensure they cannot be reused if compromised:
-*   The refresh token is permanently deleted from the `refresh_tokens` table.
-*   If `ENABLE_TOKEN_BLACKLIST` is set to `true`, the access token's `jti` is inserted into the `revoked_tokens` table with an expiration timestamp equal to the token's lifetime.
-*   During every subsequent request validation, the system queries the `revoked_tokens` table to check if the incoming `jti` is blacklisted.
+## 🧪 Demo Walkthrough
+
+### Dashboard (`/dashboard`)
+
+1. **Session Info** — Displays decoded JWT claims: email, userId, jti, iat, exp.
+2. **Protected Asset** — Renders `cat-hihi.webp` via `/api/assets/cat-hihi.webp`. The browser automatically sends the `access_token` cookie, so the image loads. Attempts without the cookie return `401`.
+3. **Authorization Demo** — Click "Test Unauthenticated Access" to fetch the same asset with `credentials: "omit"`, proving that the endpoint rejects unauthenticated requests.
+4. **Verify Token** — Calls `/api/auth/token-info` to confirm the token is valid.
+
+### Token Inspector (`/tokens`)
+
+- Decodes and displays the JWT header, payload, signature, and raw token string.
+- Supports manual token refresh and revoke + sign out actions.
 
 ---
 
-## 💻 Development Commands Reference
+## 💻 Commands
 
-Here is a summary of the scripts defined in `package.json`:
-
-*   `bun run dev` - Launches the Next.js development server with Turbopack enabled.
-*   `bun run build` - Builds the application for production.
-*   `bun run start` - Starts the Next.js production server.
-*   `bun run lint` - Runs `oxlint` to analyze the source code for bugs and anti-patterns.
-*   `bun run lint:fix` - Runs `oxlint` and applies automatic fixes where possible.
-*   `bun run typecheck` - Compiles TypeScript with the `--noEmit` flag to run strict type checking.
-*   `bun run db:generate` - Generates SQL migration files from the Drizzle schemas.
-*   `bun run db:migrate` - Applies outstanding database migrations.
-*   `bun run db:studio` - Launches Drizzle Studio (web database browser) at `https://local.drizzle.studio`.
-*   `bun run docker:up` - Starts the local PostgreSQL database Docker container.
-*   `bun run docker:down` - Shuts down the local PostgreSQL database Docker container.
+| Command | Description |
+|---|---|
+| `bun run dev` | Dev server (Turbopack) |
+| `bun run build` | Production build |
+| `bun run start` | Production server |
+| `bun run lint` | Oxlint |
+| `bun run lint:fix` | Oxlint auto-fix |
+| `bun run typecheck` | `tsc --noEmit` |
+| `bun run db:generate` | Generate Drizzle migrations |
+| `bun run db:migrate` | Apply migrations |
+| `bun run db:studio` | Drizzle Studio |
+| `bun run docker:up` | Start PostgreSQL container |
+| `bun run docker:down` | Stop PostgreSQL container |
