@@ -12,7 +12,7 @@ interface AccessTokenPayload extends jose.JWTPayload {
   jti: string;
 }
 
-export async function middleware(request: NextRequest): Promise<Response> {
+export async function proxy(request: NextRequest): Promise<Response> {
   const { pathname } = request.nextUrl;
 
   const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/tokens");
@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest): Promise<Response> {
         return response;
       }
     } catch (error) {
-      console.error("Middleware token refresh error:", error);
+      console.error("Proxy token refresh error:", error);
     }
 
     // Redirect to sign-in if refresh fails
