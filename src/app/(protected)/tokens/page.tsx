@@ -1,143 +1,49 @@
-"use client";
+import { getSession } from "@/lib/session";
+import Navbar from "@/components/navbar";
+import { redirect } from "next/navigation";
+import TokenInspector from "./token-inspector";
+import { Database } from "lucide-react";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+export default async function TokensPage() {
+  const session = await getSession();
 
-interface TokenData {
-  raw: string;
-  header: Record<string, unknown>;
-  payload: Record<string, unknown>;
-  signature: string | null;
-}
-
-export default function TokenInspectorPage() {
-  const router = useRouter();
-  const [accessToken, setAccessToken] = useState<TokenData | null>(null);
-  const [refreshToken, setRefreshToken] = useState<TokenData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showRaw, setShowRaw] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
-  const fetchTokenInfo = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/token-info");
-      if (!res.ok) throw new Error("Failed to fetch token info");
-      const data = await res.json();
-      setAccessToken(data.accessToken);
-      setRefreshToken(data.refreshToken);
-    } catch {
-      setAccessToken(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTokenInfo();
-  }, [fetchTokenInfo]);
-
-  const handleRefresh = async () => {
-    setActionLoading("refresh");
-    setActionMessage(null);
-    try {
-      const res = await fetch("/api/auth/refresh", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Refresh failed");
-      setActionMessage({ type: "success", text: "Tokens refreshed" });
-      await fetchTokenInfo();
-    } catch (err) {
-      setActionMessage({
-        type: "error",
-        text: err instanceof Error ? err.message : "Refresh failed",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleRevoke = async () => {
-    setActionLoading("revoke");
-    setActionMessage(null);
-    try {
-      const res = await fetch("/api/auth/sign-out", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Revoke failed");
-      router.refresh();
-      router.push("/sign-in");
-    } catch (err) {
-      setActionMessage({
-        type: "error",
-        text: err instanceof Error ? err.message : "Revoke failed",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const formatJSON = (obj: Record<string, unknown>): string => {
-    return JSON.stringify(obj, null, 2);
-  };
-
-  if (loading) {
-    return <main><p>Loading...</p></main>;
-  }
-
-  if (!accessToken) {
-    return <main><p>No active session found.</p></main>;
+  if (!session) {
+    redirect("/sign-in");
   }
 
   return (
-    <main>
-      <h1>Token Inspector</h1>
+    <div className="dashboard-page min-h-screen bg-[#FAF7F2] text-stone-900 font-mono antialiased relative overflow-hidden">
+      {/* Grid background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ebe8df_1px,transparent_1px),linear-gradient(to_bottom,#ebe8df_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/5 rounded-full blur-3xl pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-stone-500/5 rounded-full blur-3xl pointer-events-none z-0" />
 
-      <h3>Header</h3>
-      <pre>{formatJSON(accessToken.header)}</pre>
-
-      <h3>Payload</h3>
-      <pre>{formatJSON(accessToken.payload)}</pre>
-
-      <h3>Signature</h3>
-      <pre>{accessToken.signature || "N/A"}</pre>
-
-      <h3>Raw Access Token</h3>
-      <button onClick={() => setShowRaw(!showRaw)}>
-        {showRaw ? "Hide" : "Show"}
-      </button>
-      {showRaw && <pre>{accessToken.raw}</pre>}
-
-      <h3>Actions</h3>
-      <button
-        onClick={handleRefresh}
-        disabled={actionLoading !== null}
-      >
-        {actionLoading === "refresh" ? "Refreshing..." : "Refresh Tokens"}
-      </button>
-
-      <button
-        onClick={handleRevoke}
-        disabled={actionLoading !== null}
-      >
-        {actionLoading === "revoke" ? "Revoking..." : "Revoke & Sign Out"}
-      </button>
-
-      {actionMessage && (
-        <p className={actionMessage.type === "success" ? "success" : "error"}>{actionMessage.text}</p>
-      )}
-
-      {refreshToken && (
-        <div>
-          <h3>Refresh Token</h3>
-          <p>Valid &middot; expires{" "}
-            {typeof refreshToken.payload.exp === "number" &&
-              new Date(refreshToken.payload.exp * 1000).toLocaleString()}
-          </p>
-          <pre>{JSON.stringify(refreshToken.payload, null, 2)}</pre>
+      {/* Header */}
+      <header className="relative z-10 border-b border-stone-200/80 bg-[#FAF7F2]/80 backdrop-blur-md sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Navbar userEmail={session.email} />
         </div>
-      )}
-    </main>
+      </header>
+
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8">
+        {/* Page heading */}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest font-mono">
+            <Database className="w-3.5 h-3.5 text-blue-600" />
+            <span>CRYPTOGRAPHIC_TOKEN_INSPECTOR</span>
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-stone-900 leading-none">
+            Token Inspector
+          </h1>
+          <p className="text-xs text-stone-500 font-sans mt-1 max-w-xl leading-relaxed">
+            Decodes the live JWT access token from your session cookie. Inspect
+            header, payload, and signature; rotate the keypair; or revoke the
+            session entirely.
+          </p>
+        </div>
+
+        <TokenInspector userEmail={session.email} />
+      </main>
+    </div>
   );
 }
