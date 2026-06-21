@@ -154,7 +154,7 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
     }
   };
 
-  const handleRevoke = async () => {
+  const handleRevoke = useCallback(async () => {
     setActionLoading("revoke");
     setActionMessage(null);
     try {
@@ -170,7 +170,7 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
       });
       setActionLoading(null);
     }
-  };
+  }, [router]);
 
   // Keyboard shortcuts (R = rotate, T = toggle raw)
   useEffect(() => {
