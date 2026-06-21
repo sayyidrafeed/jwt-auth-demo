@@ -289,23 +289,27 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
 
             <div className="p-5 flex flex-col gap-4">
               {/* Visual token parts — hoverable per segment */}
+                            
               <div
-                className="p-4 bg-stone-50 border border-stone-200 rounded-lg break-all text-[11px] font-mono leading-loose select-all"
+                className="p-4 bg-stone-50 border border-stone-200 rounded-lg break-all text-[11px] font-mono leading-loose select-all token-inspect-display"
                 aria-describedby="token-legend"
               >
-                <span className="text-blue-600 hover:bg-blue-100/60 transition-colors duration-150 cursor-default rounded-sm">
+                <span className="s3-seg s3-hdr">
                   <span className="sr-only">Header: </span>
                   {parts[0]}
+                  <span className="s3-tip">HEADER</span>
                 </span>
-                <span className="text-stone-300">.</span>
-                <span className="text-stone-700 hover:bg-stone-200/60 transition-colors duration-150 cursor-default rounded-sm">
+                <span className="s3-dot">.</span>
+                <span className="s3-seg s3-pay">
                   <span className="sr-only">Payload: </span>
                   {parts[1]}
+                  <span className="s3-tip">PAYLOAD</span>
                 </span>
-                <span className="text-stone-300">.</span>
-                <span className="text-stone-400 hover:bg-stone-200/40 transition-colors duration-150 cursor-default rounded-sm">
+                <span className="s3-dot">.</span>
+                <span className="s3-seg s3-sig">
                   <span className="sr-only">Signature: </span>
                   {parts[2]}
+                  <span className="s3-tip">SIGNATURE</span>
                 </span>
               </div>
 
@@ -343,29 +347,53 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
           </section>
 
           {/* Decoded sections */}
-          <section className="relative bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-blue-600 rounded-t-xl" aria-hidden="true" />
-            <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center gap-2">
+          <style dangerouslySetInnerHTML={{ __html: `
+            .hover-3d-container {
+              perspective: 1000px;
+            }
+            .hover-3d-row {
+              transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+              position: relative;
+              padding: 0.75rem 1rem;
+              margin: -0.25rem -1rem;
+              border: 1px solid transparent;
+              border-radius: 8px;
+              transform-origin: center left;
+            }
+            .hover-3d-row:hover {
+              background: #ffffff;
+              border-color: #2563eb;
+              transform: translateZ(10px) rotateX(0deg) scale(1.02);
+              box-shadow: -10px 10px 20px -5px rgba(37,99,235,0.15), 0 0 0 2px #2563eb inset;
+              z-index: 10;
+            }
+            .hover-3d-container:hover .hover-3d-row:not(:hover) {
+              transform: translateZ(-10px) scale(0.95);
+              opacity: 0.4;
+            }
+          ` }} />
+          <section className="relative bg-white border border-stone-200 rounded-xl shadow-sm overflow-visible">
+            <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center gap-2 rounded-t-xl">
               <Key className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 font-mono">
                 DECODED_PAYLOAD
               </span>
             </div>
-
-            <div className="p-5 flex flex-col gap-0">
+            <div className="p-5 flex flex-col gap-0 hover-3d-container">
               {Object.entries(accessToken.payload).map(([k, v]) => {
                 const isTimestamp = k === "iat" || k === "exp";
                 const displayValue = isTimestamp
                   ? `${formatTimestamp(v)}  (${v})`
                   : String(v);
                 return (
-                  <ManifestRow
-                    key={k}
-                    label={k.toUpperCase()}
-                    value={displayValue}
-                    mono={!isTimestamp}
-                    description={CLAIM_DESCRIPTIONS[k]}
-                  />
+                  <div key={k} className="hover-3d-row">
+                    <ManifestRow
+                      label={k.toUpperCase()}
+                      value={displayValue}
+                      mono={!isTimestamp}
+                      description={CLAIM_DESCRIPTIONS[k]}
+                    />
+                  </div>
                 );
               })}
             </div>
