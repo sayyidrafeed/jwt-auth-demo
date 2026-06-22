@@ -22,14 +22,23 @@ export default function Jwtsimulator() {
   };
 
   return (
-    <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 mt-12 bg-stone-50 border border-stone-200 rounded-xl overflow-hidden shadow-xl font-mono text-xs text-stone-855">
+    <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 mt-12 bg-stone-50 border border-stone-200 rounded-xl overflow-hidden shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] font-mono text-xs text-stone-855 group hover:shadow-[0_25px_50px_-12px_rgba(37,99,235,0.2)] transition-[box-shadow] duration-500 transform-style-3d">
       {/* Top Bar */}
       <div className="col-span-12 bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-blue-400 inline-block" />
-          <span className="w-3 h-3 rounded-full bg-stone-300 inline-block" />
-          <span className="w-3 h-3 rounded-full bg-stone-400 inline-block" />
-          <span className="text-stone-600 font-semibold ml-2 flex items-center gap-1.5">
+          {/* Traffic lights */}
+          <div className="flex items-center gap-1.5 group/lights mr-2">
+            <div className="w-3 h-3 rounded-full bg-stone-300 border border-stone-400/20 shadow-inner group-hover/lights:bg-[#3B82F6] group-hover/lights:border-[#1D4ED8] transition-colors cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-black/20 opacity-100 group-hover/lights:opacity-0 transition-opacity" />
+            </div>
+            <div className="w-3 h-3 rounded-full bg-stone-300 border border-stone-400/20 shadow-inner group-hover/lights:bg-[#D1D5DB] group-hover/lights:border-[#9CA3AF] transition-colors cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-black/20 opacity-100 group-hover/lights:opacity-0 transition-opacity" />
+            </div>
+            <div className="w-3 h-3 rounded-full bg-stone-300 border border-stone-400/20 shadow-inner group-hover/lights:bg-[#6B7280] group-hover/lights:border-[#4B5563] transition-colors cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-black/20 opacity-100 group-hover/lights:opacity-0 transition-opacity" />
+            </div>
+          </div>
+          <span className="text-stone-600 font-semibold flex items-center gap-1.5">
             <Cpu className="w-3.5 h-3.5 text-blue-600" />
             JWT_DECODER_PROBE // stateless_inspector
           </span>
