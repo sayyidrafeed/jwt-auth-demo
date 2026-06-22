@@ -24,17 +24,17 @@ interface TokenData {
 }
 
 const CLAIM_DESCRIPTIONS: Record<string, string> = {
-  iat: "Issued At — when the token was created",
-  exp: "Expiration — when the token becomes invalid",
-  sub: "Subject — who this token represents (user ID)",
-  jti: "JWT ID — unique identifier for this token",
-  iss: "Issuer — who created the token",
-  aud: "Audience — intended recipient of this token",
-  nbf: "Not Before — token is invalid before this time",
+  iat: "Issued At - when the token was created",
+  exp: "Expiration - when the token becomes invalid",
+  sub: "Subject - who this token represents (user ID)",
+  jti: "JWT ID - unique identifier for this token",
+  iss: "Issuer - who created the token",
+  aud: "Audience - intended recipient of this token",
+  nbf: "Not Before - token is invalid before this time",
 };
 
 function formatTimestamp(unix: unknown): string {
-  if (typeof unix !== "number") return "—";
+  if (typeof unix !== "number") return "-";
   return new Date(unix * 1000).toLocaleString(undefined, {
     year: "numeric",
     month: "short",
@@ -201,11 +201,12 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm animate-pulse"
+            className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm overflow-hidden animate-pulse"
           >
-            <div className="h-10 bg-stone-100 border-b border-stone-200" />
-            <div className="p-6 flex flex-col gap-3">
+            <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
               <div className="h-3 bg-stone-100 rounded w-1/3" />
+            </div>
+            <div className="p-0 flex flex-col gap-3">
               <div className="h-3 bg-stone-100 rounded w-2/3" />
               <div className="h-3 bg-stone-100 rounded w-1/2" />
             </div>
@@ -262,8 +263,8 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
         <div className="md:col-span-3 lg:col-span-7 flex flex-col gap-6 min-w-0">
 
           {/* Encoded token visual */}
-          <section className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center justify-between">
+          <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
+            <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
               <div className="flex items-center gap-2">
                 <Binary className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 font-mono">
@@ -287,9 +288,9 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
               </button>
             </div>
 
-            <div className="p-5 flex flex-col gap-4">
+            <div className="p-0 flex flex-col gap-4">
               {/* Visual token parts — hoverable per segment */}
-                            
+
               <div
                 className="p-4 bg-stone-50 border border-stone-200 rounded-lg break-all text-[11px] font-mono leading-loose select-all token-inspect-display"
                 aria-describedby="token-legend"
@@ -372,14 +373,14 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
               opacity: 0.4;
             }
           ` }} />
-          <section className="relative bg-white border border-stone-200 rounded-xl shadow-sm overflow-visible">
-            <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center gap-2 rounded-t-xl">
+          <section className="relative bg-white border border-stone-200 rounded-xl p-6 shadow-sm overflow-visible group hover:border-blue-200 transition-colors">
+            <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
               <Key className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 font-mono">
                 DECODED_PAYLOAD
               </span>
             </div>
-            <div className="p-5 flex flex-col gap-0 hover-3d-container">
+            <div className="p-0 flex flex-col gap-0 hover-3d-container">
               {Object.entries(accessToken.payload).map(([k, v]) => {
                 const isTimestamp = k === "iat" || k === "exp";
                 const displayValue = isTimestamp
@@ -401,37 +402,37 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
 
           {/* Header + Signature in a 2-col grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <section className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center gap-2">
+            <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
+              <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
                 <Binary className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 font-mono">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-900 font-mono">
                   HEADER
                 </span>
               </div>
-              <div className="p-5">
+              <div className="p-0">
                 <TokenPartBlock
                   label="Algorithm"
-                  value={String(accessToken.header.alg ?? "—")}
+                  value={String(accessToken.header.alg ?? "-")}
                   color="blue"
                 />
                 <div className="mt-3">
                   <TokenPartBlock
                     label="Type"
-                    value={String(accessToken.header.typ ?? "—")}
+                    value={String(accessToken.header.typ ?? "-")}
                     color="stone"
                   />
                 </div>
               </div>
             </section>
 
-            <section className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center gap-2">
+            <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
+              <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
                 <Shield className="w-3.5 h-3.5 text-stone-400" aria-hidden="true" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 font-mono">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-900 font-mono">
                   SIGNATURE
                 </span>
               </div>
-              <div className="p-5">
+              <div className="p-0">
                 <TokenPartBlock
                   label="Base64Url"
                   value={accessToken.signature ?? "N/A"}
@@ -446,15 +447,15 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
         <div className="md:col-span-2 lg:col-span-5 flex flex-col gap-6 min-w-0">
 
           {/* Actions */}
-          <section className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center gap-2">
+          <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
+            <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
               <Clock className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 font-mono">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-900 font-mono">
                 SESSION_CONTROLS
               </span>
             </div>
 
-            <div className="p-5 flex flex-col gap-4">
+            <div className="p-0 flex flex-col gap-4">
               <p className="text-[11px] text-stone-500 font-sans leading-relaxed">
                 Rotate the token pair or revoke the session entirely. Rotation
                 issues a new access/refresh keypair and invalidates the previous
@@ -535,15 +536,15 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
 
           {/* Refresh Token */}
           {refreshToken && (
-            <section className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="bg-stone-100 border-b border-stone-200 px-4 py-3 flex items-center gap-2">
+            <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
+              <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
                 <Database className="w-3.5 h-3.5 text-stone-400" aria-hidden="true" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 font-mono">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-900 font-mono">
                   REFRESH_TOKEN
                 </span>
               </div>
 
-              <div className="p-5 flex flex-col gap-0">
+              <div className="p-0 flex flex-col gap-0">
                 <div className="mb-3 flex items-center gap-2 pb-3 border-b border-stone-100">
                   <span
                     className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"
@@ -551,7 +552,7 @@ export default function TokenInspector({ userEmail }: { userEmail: string }) {
                     aria-label="Refresh token is valid"
                   />
                   <span className="text-[10px] text-stone-500 font-mono font-bold uppercase tracking-wider">
-                    VALID — HASHED IN DB
+                    VALID - HASHED IN DB
                   </span>
                 </div>
 
