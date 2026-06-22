@@ -24,12 +24,10 @@ export default function AuthDemoPanel() {
   };
 
   return (
-    <section className="bg-white border border-stone-200 rounded p-6 shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-[3px] bg-stone-300" />
-      
+    <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
       <div className="flex items-center gap-2 mb-4 border-b border-stone-100 pb-3">
         <AlertCircle className="w-4 h-4 text-blue-600" />
-        <h2 className="text-xs font-bold uppercase tracking-wider text-stone-850">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-stone-900">
           PROBE_UNAUTHORIZED_ACCESS
         </h2>
       </div>
@@ -38,14 +36,26 @@ export default function AuthDemoPanel() {
         Simulate an external HTTP client requesting the protected asset without the required session context (no cookies transmitted).
       </p>
 
-      <button 
-        onClick={testUnauthenticated} 
-        disabled={testResult.loading}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded bg-blue-600 text-white hover:bg-blue-500 border border-blue-700 hover:border-blue-600 shadow-sm transition-all duration-150 disabled:opacity-50 cursor-pointer min-h-[40px] uppercase tracking-wider"
-      >
-        <Play className="w-3.5 h-3.5" />
-        {testResult.loading ? "SIMULATING_REQUEST..." : "RUN_UNAUTH_PROBE"}
-      </button>
+      <div className="flex gap-2">
+        <button 
+          onClick={testUnauthenticated} 
+          disabled={testResult.loading}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded bg-blue-600 text-white hover:bg-blue-500 border border-blue-700 hover:border-blue-600 shadow-sm transition-all duration-150 disabled:opacity-50 cursor-pointer min-h-[40px] uppercase tracking-wider"
+        >
+          <Play className="w-3.5 h-3.5" />
+          {testResult.loading ? "SIMULATING_REQUEST..." : "RUN_UNAUTH_PROBE"}
+        </button>
+
+        {testResult.status !== undefined && (
+          <button
+            onClick={() => setTestResult({ loading: false })}
+            disabled={testResult.loading}
+            className="flex-none px-4 py-2.5 text-xs font-bold rounded bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-300 transition-all duration-150 disabled:opacity-50 cursor-pointer min-h-[40px] uppercase tracking-wider"
+          >
+            CLEAR
+          </button>
+        )}
+      </div>
 
       {testResult.loading && (
         <div className="mt-4 p-4 rounded border border-stone-200 bg-stone-50 text-[10px] text-stone-500 font-semibold animate-pulse flex items-center gap-2">
@@ -77,7 +87,7 @@ export default function AuthDemoPanel() {
               {testResult.body && (
                 <div className="mt-1">
                   <span className="text-stone-400 block text-[9px] mb-1">RESPONSE_BODY:</span>
-                  <pre className="bg-stone-900 text-stone-250 p-2.5 rounded text-[10px] overflow-x-auto border border-stone-850">
+                  <pre className="bg-stone-900 text-stone-300 p-2.5 rounded text-[10px] overflow-x-auto border border-stone-800">
                     {testResult.body}
                   </pre>
                 </div>

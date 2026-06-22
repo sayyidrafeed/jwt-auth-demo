@@ -27,18 +27,16 @@ export default async function TokensPage() {
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-8">
         {/* Page heading */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest font-mono">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-stone-500 uppercase tracking-widest font-mono">
             <Database className="w-3.5 h-3.5 text-blue-600" />
             <span>CRYPTOGRAPHIC_TOKEN_INSPECTOR</span>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-stone-900 leading-none">
+          <h1 className="text-[clamp(1.5rem,3vw,2.25rem)] font-extrabold tracking-[-0.04em] text-stone-900 leading-none">
             Token Inspector
           </h1>
-          <p className="text-xs text-stone-500 font-sans mt-1 max-w-xl leading-relaxed">
-            Decodes the live JWT access token from your session cookie. Inspect
-            header, payload, and signature; rotate the keypair; or revoke the
-            session entirely.
+          <p className="text-[13px] text-stone-600 font-sans mt-1 max-w-2xl leading-relaxed">
+            Decodes the live JWT access token from your session cookie. Inspect header, payload, and signature; rotate the keypair; or revoke the session entirely.
           </p>
         </div>
 
