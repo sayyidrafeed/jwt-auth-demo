@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Navbar from "@/components/navbar";
-import { Shield, Key, ArrowRight, Activity, Binary, Loader2 } from "lucide-react";
+import { Shield, Key, ArrowRight, Activity, Loader2 } from "lucide-react";
 
 // The raw characters used for the shredder effect
 const GLITCH_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>/\\";
