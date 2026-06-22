@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useCallback } from "react";
 import Navbar from "@/components/navbar";
-import { Shield, Key, ArrowRight, Activity, Binary, Loader2 } from "lucide-react";
+import { Shield, Key, ArrowRight, Activity, Loader2 } from "lucide-react";
 
 export default function SignIn() {
   const router = useRouter();
