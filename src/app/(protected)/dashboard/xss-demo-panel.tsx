@@ -15,7 +15,7 @@ export default function XssDemoPanel() {
   const postComment = () => {
     const trimmed = input.trim();
     if (!trimmed) return;
-    setComments(prev => [{ id: Date.now(), text: trimmed }, ...prev]);
+    setComments(prev => [{ id: Date.now() + Math.random(), text: trimmed }, ...prev]);
     setInput("");
   };
 
