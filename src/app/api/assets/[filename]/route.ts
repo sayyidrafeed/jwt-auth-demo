@@ -52,8 +52,6 @@ export async function GET(
       headers: { "Content-Type": contentType },
     });
   } catch {
-    // ponytail: 401 for both "not in your role dir" and "file doesn't exist";
-    // if we need distinct 404 for genuinely-missing files, check all role dirs first.
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 }
