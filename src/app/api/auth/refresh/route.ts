@@ -51,7 +51,7 @@ export async function POST(): Promise<Response> {
 
     // Fetch user details for the new access token
     const userList = await db
-      .select({ id: users.id, email: users.email })
+      .select({ id: users.id, email: users.email, role: users.role })
       .from(users)
       .where(eq(users.id, payload.userId))
       .limit(1);
@@ -68,6 +68,7 @@ export async function POST(): Promise<Response> {
     const { token: newAccessToken } = await signAccessToken({
       userId: user.id,
       email: user.email,
+      role: user.role,
     });
 
     const newRefreshToken = await signRefreshToken({

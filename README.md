@@ -43,7 +43,10 @@ jwt-auth-demo/
 ├── tsconfig.json                   # Strict TypeScript config
 ├── src/
 │   ├── assets/
-│   │   └── cat-hihi.webp           # Demo protected image
+│   │   ├── admin/
+│   │   │   └── cat-hihi.webp           # Admin-only protected image
+│   │   └── member/
+│   │       └── cat-hehe.webp           # Member-only protected image
 │   ├── app/
 │   │   ├── globals.css             # Global styles
 │   │   ├── layout.tsx              # Root layout
@@ -132,11 +135,27 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
+## 🧪 Seeded Accounts
+
+For demo purposes, an admin account is pre-seeded:
+
+| Role  | Email              | Password   |
+| ----- | ------------------ | ---------- |
+| admin | admin@gmail.com    | admin123   |
+
+Run the seed after migration:
+
+```bash
+bun run db:seed
+```
+
+---
+
 ## 🛡️ Authentication Flow
 
 ### Token Strategy
 
-1. **Access Token** — Short-lived (default `15m`). Signed with HS256 via `jose`. Contains `{ userId, email, jti }`. Stored in `access_token` cookie.
+1. **Access Token** — Short-lived (default `15m`). Signed with HS256 via `jose`. Contains `{ userId, email, role, jti }`. Stored in `access_token` cookie.
 2. **Refresh Token** — Long-lived (default `7d`). SHA-256 hash stored in `refresh_tokens` table. Stored in `refresh_token` cookie. Rotated on each use.
 
 ### Sign Up / Sign In
@@ -186,4 +205,4 @@ The `proxy.ts` module contains logic to detect expired access tokens and automat
 | `bun run db:migrate` | Apply migrations |
 | `bun run db:studio` | Drizzle Studio |
 | `bun run docker:up` | Start PostgreSQL container |
-| `bun run docker:down` | Stop PostgreSQL container |
+| `bun run db:seed`  | Seed admin account |
