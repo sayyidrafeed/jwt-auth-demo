@@ -64,7 +64,7 @@ export default function XssDemoPanel() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-stone-400 mb-0.5">Anonymous</div>
-                <p className="text-sm text-stone-700 break-words">{c.text}</p>
+                <p className="text-sm text-stone-700 break-words whitespace-pre-wrap">{c.text}</p>
               </div>
             </div>
           ))}
