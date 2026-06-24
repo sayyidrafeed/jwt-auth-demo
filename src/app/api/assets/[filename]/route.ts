@@ -1,7 +1,7 @@
 import { verifyToken, type AccessTokenPayload } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { readFile } from "fs/promises";
-import { join } from "path";
+import { join, relative } from "path";
 import { NextResponse } from "next/server";
 
 const ROOT = join(process.cwd(), "src", "assets");
@@ -35,18 +35,20 @@ export async function GET(
   const ext = filename.substring(filename.lastIndexOf(".")).toLowerCase();
   const contentType = MIME_TYPES[ext];
   if (!contentType) {
-    return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Unsupported file type" },
+      { status: 400 },
+    );
   }
 
   const safeName = filename.replace(/\.\.\//g, "").replace(/^\/+/, "");
-  const filePath = join(ROOT, payload.role, safeName);
-
-  if (!filePath.startsWith(ROOT)) {
+  const resolved = join(ROOT, payload.role, safeName);
+  if (relative(ROOT, resolved).startsWith("..")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
-    const buffer = await readFile(filePath);
+    const buffer = await readFile(resolved);
     return new NextResponse(buffer, {
       status: 200,
       headers: { "Content-Type": contentType },
