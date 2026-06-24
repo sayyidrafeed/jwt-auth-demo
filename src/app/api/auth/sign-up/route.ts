@@ -56,7 +56,7 @@ export async function POST(request: Request): Promise<Response> {
         email: normalizedEmail,
         passwordHash,
       })
-      .returning({ id: users.id, email: users.email });
+      .returning({ id: users.id, email: users.email, role: users.role });
 
     if (!newUser) {
       return NextResponse.json(
@@ -69,6 +69,7 @@ export async function POST(request: Request): Promise<Response> {
     const { token: accessToken } = await signAccessToken({
       userId: newUser.id,
       email: newUser.email,
+      role: newUser.role,
     });
 
     const refreshToken = await signRefreshToken({

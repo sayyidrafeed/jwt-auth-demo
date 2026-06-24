@@ -96,6 +96,16 @@ export default async function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 py-2 border-b border-stone-100">
                   <span className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-stone-400" />{" "}
+                    ROLE
+                  </span>
+                  <span className="sm:col-span-2 text-xs font-bold text-blue-600 uppercase">
+                    {session.role}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 py-2 border-b border-stone-100">
+                  <span className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-stone-400" />{" "}
                     TOKEN_ID_JTI
                   </span>
                   <span className="sm:col-span-2 text-xs text-stone-600 break-all">
@@ -157,19 +167,19 @@ export default async function Dashboard() {
 
               <p className="text-[11px] text-stone-500 leading-relaxed font-sans mb-4">
                 This asset is fetched from{" "}
-                <code>/api/assets/cat-hihi.webp</code>. It is protected by
-                cookie validation inside Next.js API routes.
+                <code>/api/assets/{session.role === "admin" ? "cat-hihi.webp" : "cat-hehe.webp"}</code>.
+                It is protected by cookie validation and role-based access control.
               </p>
 
               <div className="relative border border-stone-200 rounded overflow-hidden bg-stone-50 flex items-center justify-center p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/api/assets/cat-hihi.webp"
-                  alt="Protected cat asset"
+                  src={session.role === "admin" ? "/api/assets/cat-hihi.webp" : "/api/assets/cat-hehe.webp"}
+                  alt="Protected role asset"
                   className="rounded border border-stone-200 max-h-56 object-contain"
                 />
                 <span className="absolute top-3 right-3 text-[9px] font-bold tracking-widest bg-blue-600 text-white px-2 py-0.5 rounded shadow">
-                  AUTHENTICATED
+                  {session.role.toUpperCase()}
                 </span>
               </div>
             </section>

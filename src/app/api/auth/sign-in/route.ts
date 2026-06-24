@@ -55,6 +55,7 @@ export async function POST(request: Request): Promise<Response> {
     const { token: accessToken } = await signAccessToken({
       userId: user.id,
       email: user.email,
+      role: user.role,
     });
 
     const refreshToken = await signRefreshToken({

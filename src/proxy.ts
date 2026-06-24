@@ -9,6 +9,7 @@ const secret = new TextEncoder().encode(
 interface AccessTokenPayload extends jose.JWTPayload {
   userId: string;
   email: string;
+  role: string;
   jti: string;
 }
 

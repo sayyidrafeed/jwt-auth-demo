@@ -4,7 +4,7 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { NextResponse } from "next/server";
 
-const ASSETS_DIR = join(process.cwd(), "src", "assets");
+const ROOT = join(process.cwd(), "src", "assets");
 
 const MIME_TYPES: Record<string, string> = {
   ".webp": "image/webp",
@@ -39,9 +39,9 @@ export async function GET(
   }
 
   const safeName = filename.replace(/\.\.\//g, "").replace(/^\/+/, "");
-  const filePath = join(ASSETS_DIR, safeName);
+  const filePath = join(ROOT, payload.role, safeName);
 
-  if (!filePath.startsWith(ASSETS_DIR)) {
+  if (!filePath.startsWith(ROOT)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -52,6 +52,8 @@ export async function GET(
       headers: { "Content-Type": contentType },
     });
   } catch {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    // ponytail: 401 for both "not in your role dir" and "file doesn't exist";
+    // if we need distinct 404 for genuinely-missing files, check all role dirs first.
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }

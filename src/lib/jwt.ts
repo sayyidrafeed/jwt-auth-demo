@@ -7,6 +7,7 @@ const secret = new TextEncoder().encode(
 export interface AccessTokenPayload extends jose.JWTPayload {
   userId: string;
   email: string;
+  role: string;
   jti: string;
 }
 
@@ -19,11 +20,12 @@ export interface RefreshTokenPayload extends jose.JWTPayload {
  * @param payload The token payload.
  * @returns A promise that resolves to the token and its JTI (unique identifier).
  */
-export async function signAccessToken(payload: { userId: string; email: string }): Promise<{ token: string; jti: string }> {
+export async function signAccessToken(payload: { userId: string; email: string; role: string }): Promise<{ token: string; jti: string }> {
   const jti = crypto.randomUUID();
   const token = await new jose.SignJWT({
     userId: payload.userId,
     email: payload.email,
+    role: payload.role,
     jti,
   })
     .setProtectedHeader({ alg: "HS256" })

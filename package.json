@@ -13,7 +13,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "db:seed": "bun run src/db/seed.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.4",
