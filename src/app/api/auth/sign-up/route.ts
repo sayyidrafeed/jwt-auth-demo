@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { users, refreshTokens } from "@/db/schema";
 import { hashPassword } from "@/lib/password";
 import { signAccessToken, signRefreshToken, hashToken } from "@/lib/jwt";
+import { getDeviceInfo } from "@/lib/user-agent";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request): Promise<Response> {
@@ -16,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const { email, password } = body as Record<string, string>;
+    const { email, password, fingerprint } = body as Record<string, unknown>;
 
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return NextResponse.json(
@@ -79,11 +80,16 @@ export async function POST(request: Request): Promise<Response> {
     // Hash and store the refresh token
     const tokenHash = await hashToken(refreshToken);
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    const { deviceName, ipAddress } = getDeviceInfo(request);
 
     await db.insert(refreshTokens).values({
       userId: newUser.id,
       tokenHash,
+      fingerprintHash: typeof fingerprint === "string" ? fingerprint : null,
+      deviceName,
+      ipAddress,
       expiresAt,
     });
 

@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Navbar from "@/components/navbar";
-import { Shield, Key, ArrowRight, Activity, Loader2 } from "lucide-react";
+import {
+  Shield, Key, ArrowRight, Activity, Loader2,
+  MonitorSmartphone, Globe, Clock, AlertTriangle,
+} from "lucide-react";
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
+
+interface ExistingSession {
+  device: string;
+  ip: string;
+  since: string | null;
+}
 
 export default function SignIn() {
   const router = useRouter();
@@ -12,10 +22,18 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conflict, setConflict] = useState<ExistingSession | null>(null);
+  const fingerprintRef = useRef<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [spotPos, setSpotPos] = useState({ x: 50, y: 50 });
   const [bgGlowPos, setBgGlowPos] = useState({ x: 50, y: 50 });
   const [isHovering, setIsHovering] = useState(false);
+
+  useEffect(() => {
+    FingerprintJS.load().then((fp) => fp.get()).then((result) => {
+      fingerprintRef.current = result.visitorId;
+    });
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const card = cardRef.current;
@@ -23,12 +41,10 @@ export default function SignIn() {
     const rect = card.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    // Tilt: map 0-100 to -3deg to +3deg
     const tiltY = ((x - 50) / 50) * 3;
     const tiltX = ((y - 50) / 50) * -3;
     card.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
     setSpotPos({ x, y });
-    // Viewport-relative position for background glow
     setBgGlowPos({ x: (e.clientX / window.innerWidth) * 100, y: (e.clientY / window.innerHeight) * 100 });
   }, []);
 
@@ -38,19 +54,29 @@ export default function SignIn() {
     if (card) card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg)';
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const attemptSignIn = async (force: boolean) => {
     setIsLoading(true);
+    setError(null);
+    setConflict(null);
 
     try {
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          fingerprint: fingerprintRef.current,
+          ...(force ? { force: true } : {}),
+        }),
       });
 
       const data = await res.json();
+
+      if (data.conflict) {
+        setConflict(data.existingSession);
+        return;
+      }
 
       if (!res.ok) {
         throw new Error(data.message || "Authentication failed");
@@ -64,6 +90,11 @@ export default function SignIn() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    attemptSignIn(false);
   };
 
   return (
@@ -147,6 +178,67 @@ export default function SignIn() {
                 Enter your identity tokens to generate verified stateful sessions.
               </p>
             </div>
+
+            {conflict && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm">
+                <div className="w-full max-w-sm bg-stone-50 border border-amber-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="bg-gradient-to-b from-amber-50/80 to-stone-50 border-b border-amber-200/60 px-5 py-3 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-800">
+                      DEVICE_CONFLICT_DETECTED
+                    </span>
+                  </div>
+                  <div className="p-5 flex flex-col gap-4">
+                    <p className="text-xs text-stone-700 leading-relaxed font-sans">
+                      This account is already logged in on another device. Continuing will log out that session.
+                    </p>
+                    <div className="space-y-2 bg-stone-100/80 rounded-lg p-3 border border-stone-200/60">
+                      <div className="flex items-center gap-2 text-[10px] text-stone-600">
+                        <MonitorSmartphone className="w-3 h-3 text-stone-500" />
+                        <span className="font-bold text-stone-500 uppercase tracking-wider">DEVICE</span>
+                        <span className="text-stone-800 font-semibold ml-auto">{conflict.device}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-stone-600">
+                        <Globe className="w-3 h-3 text-stone-500" />
+                        <span className="font-bold text-stone-500 uppercase tracking-wider">IP</span>
+                        <span className="text-stone-800 font-semibold ml-auto">{conflict.ip}</span>
+                      </div>
+                      {conflict.since && (
+                        <div className="flex items-center gap-2 text-[10px] text-stone-600">
+                          <Clock className="w-3 h-3 text-stone-500" />
+                          <span className="font-bold text-stone-500 uppercase tracking-wider">SINCE</span>
+                          <span className="text-stone-800 font-semibold ml-auto">
+                            {new Date(conflict.since).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setConflict(null)}
+                        disabled={isLoading}
+                        className="flex-1 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-stone-300 text-stone-600 hover:bg-stone-100 transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => attemptSignIn(true)}
+                        disabled={isLoading}
+                        className="flex-1 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-amber-600 text-white hover:bg-amber-500 transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          "Continue & Log Out Other"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="p-3.5 rounded bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-bold uppercase flex items-center gap-2">

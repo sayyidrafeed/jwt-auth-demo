@@ -1,10 +1,14 @@
 import { getSession } from "@/lib/session";
+import { db } from "@/db";
+import { refreshTokens } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import Navbar from "@/components/navbar";
 import { redirect } from "next/navigation";
 import VerifyButton from "@/components/verify-button";
 import AuthDemoPanel from "./auth-demo-panel";
 import XssDemoPanel from "./xss-demo-panel";
-import { Shield, Key, Eye, Binary, Cpu, Calendar, User } from "lucide-react";
+import { parseUserAgent } from "@/lib/user-agent";
+import { Shield, Key, Eye, Binary, Cpu, Calendar, User, MonitorSmartphone, Globe } from "lucide-react";
 
 export default async function Dashboard() {
   const session = await getSession();
@@ -12,6 +16,21 @@ export default async function Dashboard() {
   if (!session) {
     redirect("/sign-in");
   }
+
+  const sessionInfo = await db
+    .select({
+      deviceName: refreshTokens.deviceName,
+      ipAddress: refreshTokens.ipAddress,
+      createdAt: refreshTokens.createdAt,
+    })
+    .from(refreshTokens)
+    .where(eq(refreshTokens.userId, session.userId))
+    .limit(1);
+
+  const device = sessionInfo[0];
+  const deviceLabel = device?.deviceName
+    ? parseUserAgent(device.deviceName)
+    : "Unknown Device";
 
   return (
     <div className="dashboard-page min-h-screen bg-[#FAF7F2] text-stone-900 selection:bg-blue-100 selection:text-blue-900 font-mono antialiased relative overflow-hidden">
@@ -138,6 +157,43 @@ export default async function Dashboard() {
                 </div>
               </div>
             </section>
+
+            {device && (
+              <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
+                <div className="flex items-center gap-2 mb-6 border-b border-stone-100 pb-3">
+                  <MonitorSmartphone className="w-4 h-4 text-blue-600" />
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                    ACTIVE_SESSION_DEVICE
+                  </h2>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 py-2 border-b border-stone-100">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1.5">
+                      <MonitorSmartphone className="w-3.5 h-3.5 text-stone-400" /> DEVICE
+                    </span>
+                    <span className="sm:col-span-2 text-xs font-semibold text-stone-900">
+                      {deviceLabel}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 py-2 border-b border-stone-100">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-stone-400" /> IP_ADDRESS
+                    </span>
+                    <span className="sm:col-span-2 text-xs text-stone-600">
+                      {device.ipAddress || "Unknown"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 py-2">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-stone-400" /> LOGGED_IN_SINCE
+                    </span>
+                    <span className="sm:col-span-2 text-xs text-stone-500">
+                      {device.createdAt?.toLocaleString() || "—"}
+                    </span>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Verification Sandbox Panel */}
             <section className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-colors">
