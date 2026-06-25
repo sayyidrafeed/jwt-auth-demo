@@ -5,6 +5,7 @@ import { users, refreshTokens } from "@/db/schema";
 import { hashPassword } from "@/lib/password";
 import { signAccessToken, signRefreshToken, hashToken } from "@/lib/jwt";
 import { eq } from "drizzle-orm";
+import { getDeviceInfo } from "@/lib/user-agent";
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -79,11 +80,15 @@ export async function POST(request: Request): Promise<Response> {
     // Hash and store the refresh token
     const tokenHash = await hashToken(refreshToken);
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    const { deviceName, ipAddress } = getDeviceInfo(request);
 
     await db.insert(refreshTokens).values({
       userId: newUser.id,
       tokenHash,
+      deviceName,
+      ipAddress,
       expiresAt,
     });
 

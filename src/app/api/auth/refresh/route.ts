@@ -38,13 +38,17 @@ export async function POST(): Promise<Response> {
 
     const dbToken = dbTokenList[0];
 
-    // Handle missing or expired token in database
     if (!dbToken || dbToken.expiresAt < new Date()) {
       if (dbToken) {
         await db.delete(refreshTokens).where(eq(refreshTokens.id, dbToken.id));
       }
       return NextResponse.json(
-        { success: false, message: "Expired or invalid refresh token" },
+        {
+          success: false,
+          message: dbToken
+            ? "Session expired."
+            : "Session invalidated. You may have been logged out because another device signed in.",
+        },
         { status: 401 }
       );
     }
@@ -81,12 +85,12 @@ export async function POST(): Promise<Response> {
 
     // Execute rotation in a transaction
     await db.transaction(async (tx) => {
-      // Remove old token
       await tx.delete(refreshTokens).where(eq(refreshTokens.id, dbToken.id));
-      // Save new token
       await tx.insert(refreshTokens).values({
         userId: user.id,
         tokenHash: newTokenHash,
+        deviceName: dbToken.deviceName,
+        ipAddress: dbToken.ipAddress,
         expiresAt,
       });
     });

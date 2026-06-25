@@ -4,7 +4,8 @@ import { db } from "@/db";
 import { users, refreshTokens } from "@/db/schema";
 import { comparePassword } from "@/lib/password";
 import { signAccessToken, signRefreshToken, hashToken } from "@/lib/jwt";
-import { eq } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
+import { getDeviceInfo, parseUserAgent } from "@/lib/user-agent";
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const { email, password } = body as Record<string, string>;
+    const { email, password, force } = body as Record<string, unknown>;
 
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return NextResponse.json(
@@ -27,7 +28,6 @@ export async function POST(request: Request): Promise<Response> {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Find user in DB
     const userList = await db
       .select()
       .from(users)
@@ -42,7 +42,6 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    // Compare passwords
     const isPasswordCorrect = await comparePassword(password, user.passwordHash);
     if (!isPasswordCorrect) {
       return NextResponse.json(
@@ -51,7 +50,32 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    // Sign Access Token and Refresh Token
+    const existingSessions = await db
+      .select({
+        deviceName: refreshTokens.deviceName,
+        ipAddress: refreshTokens.ipAddress,
+        createdAt: refreshTokens.createdAt,
+      })
+      .from(refreshTokens)
+      .where(and(eq(refreshTokens.userId, user.id), gte(refreshTokens.expiresAt, new Date())));
+
+    if (existingSessions.length > 0 && force !== true) {
+      const session = existingSessions[0]!;
+      return NextResponse.json({
+        conflict: true,
+        existingSession: {
+          device: session.deviceName ? parseUserAgent(session.deviceName) : "Unknown Device",
+          ip: session.ipAddress || "Unknown IP",
+          since: session.createdAt?.toISOString() || null,
+        },
+        message: "You are already logged in on another device.",
+      });
+    }
+
+    if (force === true) {
+      await db.delete(refreshTokens).where(eq(refreshTokens.userId, user.id));
+    }
+
     const { token: accessToken } = await signAccessToken({
       userId: user.id,
       email: user.email,
@@ -62,24 +86,26 @@ export async function POST(request: Request): Promise<Response> {
       userId: user.id,
     });
 
-    // Hash and store the refresh token
     const tokenHash = await hashToken(refreshToken);
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    const { deviceName, ipAddress } = getDeviceInfo(request);
 
     await db.insert(refreshTokens).values({
       userId: user.id,
       tokenHash,
+      deviceName,
+      ipAddress,
       expiresAt,
     });
 
-    // Set HTTP-only cookies
     const cookieStore = await cookies();
     cookieStore.set("access_token", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 15 * 60,
       path: "/",
     });
 
@@ -87,7 +113,7 @@ export async function POST(request: Request): Promise<Response> {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 
