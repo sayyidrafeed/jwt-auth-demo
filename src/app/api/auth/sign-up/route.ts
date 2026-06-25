@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { users, refreshTokens } from "@/db/schema";
+import { users } from "@/db/schema";
 import { hashPassword } from "@/lib/password";
-import { signAccessToken, signRefreshToken, hashToken } from "@/lib/jwt";
+import { signPreAuthToken } from "@/lib/jwt";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request): Promise<Response> {
@@ -65,49 +65,29 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    // Sign Access Token and Refresh Token
-    const { token: accessToken } = await signAccessToken({
-      userId: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    });
-
-    const refreshToken = await signRefreshToken({
+    // Sign Pre-Auth Token
+    const preAuthToken = await signPreAuthToken({
       userId: newUser.id,
     });
 
-    // Hash and store the refresh token
-    const tokenHash = await hashToken(refreshToken);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
-
-    await db.insert(refreshTokens).values({
-      userId: newUser.id,
-      tokenHash,
-      expiresAt,
-    });
-
-    // Set HTTP-only cookies
+    // Set HTTP-only pre_auth_token cookie
     const cookieStore = await cookies();
-    cookieStore.set("access_token", accessToken, {
+    cookieStore.set("pre_auth_token", preAuthToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 5 * 60, // 5 minutes
       path: "/",
     });
 
-    cookieStore.set("refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
-    });
+    // Clear any existing session cookies
+    cookieStore.delete("access_token");
+    cookieStore.delete("refresh_token");
 
     return NextResponse.json({
       success: true,
-      message: "Registration successful",
+      nextStep: "REGISTER",
+      message: "Registration successful. Device registration required.",
     });
   } catch (error) {
     console.error("Sign-up error:", error);
