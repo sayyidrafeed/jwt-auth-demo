@@ -72,7 +72,7 @@ export default function XssDemoPanel() {
       )}
 
       {/* Safety note — ponytail: only shown when there's content that looks like a script tag or event handler */}
-      {comments.some(c => /(<script|<img|<iframe|<svg|<body|javascript:|href\s*=\s*[\"']javascript:|on[a-zA-Z]+\s*=)/i.test(c.text)) && (
+      {comments.some(c => /(<script|<img|<iframe|<svg|<body|javascript:|href\s*=\s*["']javascript:|on[a-zA-Z]+\s*=)/i.test(c.text)) && (
         <p className="mt-4 text-xs text-stone-400 italic">
           Content rendered safely. React escapes all output by default — no XSS possible.
         </p>

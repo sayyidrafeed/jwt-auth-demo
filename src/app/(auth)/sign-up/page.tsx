@@ -98,6 +98,22 @@ export default function SignUp() {
         throw new Error(data.message || "Registration failed");
       }
 
+      if (data.nextStep === "REGISTER") {
+        const { generateAndStoreKeyPair } = await import("@/lib/device-client");
+        const publicKey = await generateAndStoreKeyPair();
+
+        const registerRes = await fetch("/api/auth/device/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ publicKey, deviceName: "Trusted Browser Device" }),
+        });
+
+        const registerData = await registerRes.json();
+        if (!registerRes.ok) {
+          throw new Error(registerData.message || "Device registration failed");
+        }
+      }
+
       await new Promise(r => setTimeout(r, 800));
 
       router.refresh();
