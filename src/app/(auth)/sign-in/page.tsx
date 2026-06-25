@@ -56,6 +56,55 @@ export default function SignIn() {
         throw new Error(data.message || "Authentication failed");
       }
 
+      if (data.nextStep === "REGISTER") {
+        const { generateAndStoreKeyPair } = await import("@/lib/device-client");
+        const publicKey = await generateAndStoreKeyPair();
+
+        const registerRes = await fetch("/api/auth/device/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ publicKey, deviceName: "Trusted Browser Device" }),
+        });
+
+        const registerData = await registerRes.json();
+        if (!registerRes.ok) {
+          throw new Error(registerData.message || "Device registration failed");
+        }
+      } else if (data.nextStep === "CHALLENGE") {
+        const { signChallenge, hasStoredKey } = await import("@/lib/device-client");
+        
+        const hasKey = await hasStoredKey();
+        if (!hasKey) {
+          const activateRes = await fetch("/api/auth/device/activate", {
+            method: "POST",
+          });
+          const activateData = await activateRes.json();
+          throw new Error(activateData.message || "Device activation required.");
+        }
+
+        const challengeRes = await fetch("/api/auth/device/challenge", {
+          method: "POST",
+        });
+        const challengeData = await challengeRes.json();
+        if (!challengeRes.ok) {
+          throw new Error(challengeData.message || "Failed to retrieve device verification challenge");
+        }
+
+        const { nonce, timestamp } = challengeData;
+        const signature = await signChallenge(nonce, timestamp);
+
+        const verifyRes = await fetch("/api/auth/device/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ signature, timestamp }),
+        });
+
+        const verifyData = await verifyRes.json();
+        if (!verifyRes.ok) {
+          throw new Error(verifyData.message || "Device verification failed");
+        }
+      }
+
       router.refresh();
       router.push("/dashboard");
     } catch (err) {

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { users, refreshTokens } from "@/db/schema";
+import { users, devices } from "@/db/schema";
 import { comparePassword } from "@/lib/password";
-import { signAccessToken, signRefreshToken, hashToken } from "@/lib/jwt";
-import { eq } from "drizzle-orm";
+import { signPreAuthToken } from "@/lib/jwt";
+import { eq, and } from "drizzle-orm";
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -51,49 +51,44 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    // Sign Access Token and Refresh Token
-    const { token: accessToken } = await signAccessToken({
+    // Check if the user has an active registered device
+    const activeDeviceList = await db
+      .select()
+      .from(devices)
+      .where(and(eq(devices.userId, user.id), eq(devices.isActive, true)))
+      .limit(1);
+
+    // Sign Pre-Auth Token
+    const preAuthToken = await signPreAuthToken({
       userId: user.id,
-      email: user.email,
-      role: user.role,
     });
 
-    const refreshToken = await signRefreshToken({
-      userId: user.id,
-    });
-
-    // Hash and store the refresh token
-    const tokenHash = await hashToken(refreshToken);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
-
-    await db.insert(refreshTokens).values({
-      userId: user.id,
-      tokenHash,
-      expiresAt,
-    });
-
-    // Set HTTP-only cookies
+    // Set HTTP-only pre_auth_token cookie
     const cookieStore = await cookies();
-    cookieStore.set("access_token", accessToken, {
+    cookieStore.set("pre_auth_token", preAuthToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 5 * 60, // 5 minutes
       path: "/",
     });
 
-    cookieStore.set("refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
-    });
+    // Clear any existing session cookies to be safe
+    cookieStore.delete("access_token");
+    cookieStore.delete("refresh_token");
+
+    if (activeDeviceList.length === 0) {
+      return NextResponse.json({
+        success: true,
+        nextStep: "REGISTER",
+        message: "Device registration required",
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Sign-in successful",
+      nextStep: "CHALLENGE",
+      message: "Device verification required",
     });
   } catch (error) {
     console.error("Sign-in error:", error);

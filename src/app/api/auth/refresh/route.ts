@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { refreshTokens, users } from "@/db/schema";
+import { refreshTokens, users, devices } from "@/db/schema";
 import { verifyToken, signAccessToken, signRefreshToken, hashToken, type RefreshTokenPayload } from "@/lib/jwt";
 import { eq } from "drizzle-orm";
 
@@ -19,9 +19,9 @@ export async function POST(): Promise<Response> {
 
     // Verify token validity
     const payload = await verifyToken<RefreshTokenPayload>(oldRefreshToken);
-    if (!payload) {
+    if (!payload || !payload.deviceId || typeof payload.sessionVersion !== "number") {
       return NextResponse.json(
-        { success: false, message: "Invalid refresh token" },
+        { success: false, message: "Invalid, expired, or legacy refresh token" },
         { status: 401 }
       );
     }
@@ -49,6 +49,27 @@ export async function POST(): Promise<Response> {
       );
     }
 
+    // Fetch device details to verify binding status
+    const deviceList = await db
+      .select()
+      .from(devices)
+      .where(eq(devices.id, payload.deviceId))
+      .limit(1);
+
+    const device = deviceList[0];
+    if (!device || !device.isActive || device.sessionVersion !== payload.sessionVersion) {
+      // Invalidate the session in DB
+      await db.delete(refreshTokens).where(eq(refreshTokens.id, dbToken.id));
+      
+      const res = NextResponse.json(
+        { success: false, message: "Unrecognized or deactivated device session" },
+        { status: 401 }
+      );
+      cookieStore.delete("access_token");
+      cookieStore.delete("refresh_token");
+      return res;
+    }
+
     // Fetch user details for the new access token
     const userList = await db
       .select({ id: users.id, email: users.email, role: users.role })
@@ -69,10 +90,14 @@ export async function POST(): Promise<Response> {
       userId: user.id,
       email: user.email,
       role: user.role,
+      deviceId: device.id,
+      sessionVersion: device.sessionVersion,
     });
 
     const newRefreshToken = await signRefreshToken({
       userId: user.id,
+      deviceId: device.id,
+      sessionVersion: device.sessionVersion,
     });
 
     const newTokenHash = await hashToken(newRefreshToken);

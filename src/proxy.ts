@@ -11,6 +11,8 @@ interface AccessTokenPayload extends jose.JWTPayload {
   email: string;
   role: string;
   jti: string;
+  deviceId: string;
+  sessionVersion: number;
 }
 
 export async function proxy(request: NextRequest): Promise<Response> {
@@ -28,7 +30,9 @@ export async function proxy(request: NextRequest): Promise<Response> {
     try {
       const { payload: verified } = await jose.jwtVerify(accessToken, secret);
       payload = verified as AccessTokenPayload;
-      isAccessTokenValid = true;
+      if (payload?.deviceId && typeof payload?.sessionVersion === "number") {
+        isAccessTokenValid = true;
+      }
 
       // Check token blacklist via subrequest if enabled
       if (isAccessTokenValid && process.env.ENABLE_TOKEN_BLACKLIST === "true" && payload?.jti) {

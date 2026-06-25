@@ -9,10 +9,23 @@ export interface AccessTokenPayload extends jose.JWTPayload {
   email: string;
   role: string;
   jti: string;
+  deviceId: string;
+  sessionVersion: number;
 }
 
 export interface RefreshTokenPayload extends jose.JWTPayload {
   userId: string;
+  deviceId: string;
+  sessionVersion: number;
+}
+
+export interface PreAuthTokenPayload extends jose.JWTPayload {
+  userId: string;
+}
+
+export interface ChallengeTokenPayload extends jose.JWTPayload {
+  userId: string;
+  nonce: string;
 }
 
 /**
@@ -20,13 +33,21 @@ export interface RefreshTokenPayload extends jose.JWTPayload {
  * @param payload The token payload.
  * @returns A promise that resolves to the token and its JTI (unique identifier).
  */
-export async function signAccessToken(payload: { userId: string; email: string; role: string }): Promise<{ token: string; jti: string }> {
+export async function signAccessToken(payload: {
+  userId: string;
+  email: string;
+  role: string;
+  deviceId: string;
+  sessionVersion: number;
+}): Promise<{ token: string; jti: string }> {
   const jti = crypto.randomUUID();
   const token = await new jose.SignJWT({
     userId: payload.userId,
     email: payload.email,
     role: payload.role,
     jti,
+    deviceId: payload.deviceId,
+    sessionVersion: payload.sessionVersion,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -41,9 +62,15 @@ export async function signAccessToken(payload: { userId: string; email: string; 
  * @param payload The token payload.
  * @returns A promise that resolves to the refresh token string.
  */
-export async function signRefreshToken(payload: { userId: string }): Promise<string> {
+export async function signRefreshToken(payload: {
+  userId: string;
+  deviceId: string;
+  sessionVersion: number;
+}): Promise<string> {
   const token = await new jose.SignJWT({
     userId: payload.userId,
+    deviceId: payload.deviceId,
+    sessionVersion: payload.sessionVersion,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -51,6 +78,28 @@ export async function signRefreshToken(payload: { userId: string }): Promise<str
     .sign(secret);
 
   return token;
+}
+
+/**
+ * Signs a short-lived pre-auth token.
+ */
+export async function signPreAuthToken(payload: { userId: string }): Promise<string> {
+  return await new jose.SignJWT({ userId: payload.userId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(secret);
+}
+
+/**
+ * Signs a short-lived challenge token.
+ */
+export async function signChallengeToken(payload: { userId: string; nonce: string }): Promise<string> {
+  return await new jose.SignJWT({ userId: payload.userId, nonce: payload.nonce })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("2m")
+    .sign(secret);
 }
 
 /**
